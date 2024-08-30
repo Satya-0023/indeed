@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .progress-bar {
+            background-color: #e0e0e0;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress {
+            background-color: #4CAF50;
+            height: 100%;
+            width: 0;
+            transition: width 0.5s ease-in-out;
+        }
+        .resource {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: move;
+        }
+        .resource:hover {
+            background-color: #f0f0f0;
+        }
+        .notification {
+            background-color: #e7f3fe;
+            border-left: 5px solid #2196F3;
+            margin-bottom: 15px;
+            padding: 10px;
+        }
+        select, input, button {
+            padding: 8px;
+            margin: 5px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Learning Dashboard</h1>
+        
+        <div class="grid">
+            <div class="card">
+                <h2>Reading Statistics</h2>
+                <p>Total Reading Time: <span id="totalReadingTime">0</span> minutes</p>
+                <p>Overall Progress: <span id="overallProgress">0</span>%</p>
+                <div class="progress-bar">
+                    <div class="progress" id="overallProgressBar"></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Progress Tracking</h2>
+                <div id="progressTracking"></div>
+            </div>
+            
+            <div class="card">
+                <h2>Custom Reports</h2>
+                <select id="reportType">
+                    <option value="timeSpent">Time Spent</option>
+                    <option value="progress">Progress</option>
+                </select>
+                <button onclick="generateReport()">Generate Report</button>
+                <div id="reportResults"></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Learning Path Creation</h2>
+            <input type="text" id="resourceTitle" placeholder="Resource Title">
+            <select id="resourceType">
+                <option value="pdf">PDF</option>
+                <option value="video">Video</option>
+                <option value="word">Word Document</option>
+            </select>
+            <button onclick="addResource()">Add Resource</button>
+            <div id="learningPath"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Notifications</h2>
+            <div id="notifications"></div>
+        </div>
+    </div>
+
+    <script>
+        let learningPath = [
+            { id: 1, title: 'Introduction to Web Development', type: 'pdf', progress: 75, timeSpent: 120 },
+            { id: 2, title: 'HTML Basics', type: 'video', progress: 100, timeSpent: 60 },
+            { id: 3, title: 'CSS Fundamentals', type: 'pdf', progress: 50, timeSpent: 90 },
+            { id: 4, title: 'JavaScript Essentials', type: 'word', progress: 25, timeSpent: 180 }
+        ];
+
+        function updateDashboard() {
+            // Update Reading Statistics
+            const totalTime = learningPath.reduce((sum, resource) => sum + resource.timeSpent, 0);
+            document.getElementById('totalReadingTime').textContent = totalTime;
+            
+            const overallProgress = Math.round(learningPath.reduce((sum, resource) => sum + resource.progress, 0) / learningPath.length);
+            document.getElementById('overallProgress').textContent = overallProgress;
+            document.getElementById('overallProgressBar').style.width = `${overallProgress}%`;
+
+            // Update Progress Tracking
+            const progressTracking = document.getElementById('progressTracking');
+            progressTracking.innerHTML = '';
+            learningPath.forEach(resource => {
+                const resourceElement = document.createElement('div');
+                resourceElement.innerHTML = `
+                    <p>${resource.title}: ${resource.progress}%</p>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: ${resource.progress}%"></div>
+                    </div>
+                `;
+                progressTracking.appendChild(resourceElement);
+            });
+
+            // Update Learning Path
+            const learningPathElement = document.getElementById('learningPath');
+            learningPathElement.innerHTML = '';
+            learningPath.forEach(resource => {
+                const resourceElement = document.createElement('div');
+                resourceElement.className = 'resource';
+                resourceElement.draggable = true;
+                resourceElement.innerHTML = `
+                    <h3>${resource.title}</h3>
+                    <p>Type: ${resource.type}</p>
+                    <p>Progress: ${resource.progress}%</p>
+                `;
+                resourceElement.addEventListener('dragstart', drag);
+                learningPathElement.appendChild(resourceElement);
+            });
+        }
+
+        function generateReport() {
+            const reportType = document.getElementById('reportType').value;
+            const reportResults = document.getElementById('reportResults');
+            reportResults.innerHTML = '<h3>Report</h3>';
+            learningPath.forEach(resource => {
+                const value = reportType === 'timeSpent' ? `${resource.timeSpent} minutes` : `${resource.progress}%`;
+                reportResults.innerHTML += `<p>${resource.title}: ${value}</p>`;
+            });
+        }
+
+        function addResource() {
+            const title = document.getElementById('resourceTitle').value;
+            const type = document.getElementById('resourceType').value;
+            if (title) {
+                const newResource = {
+                    id: learningPath.length + 1,
+                    title: title,
+                    type: type,
+                    progress: 0,
+                    timeSpent: 0
+                };
+                learningPath.push(newResource);
+                updateDashboard();
+                document.getElementById('resourceTitle').value = '';
+                addNotification(`New resource added: ${title}`);
+            }
+        }
+
+        function addNotification(message) {
+            const notifications = document.getElementById('notifications');
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            notifications.appendChild(notification);
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.innerHTML);
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text");
+            ev.target.innerHTML = data;
+        }
+
+        // Initialize dashboard
+        updateDashboard();
+        addNotification("Welcome to your Learning Dashboard!");
+    </script>
+</body>
+</html>
